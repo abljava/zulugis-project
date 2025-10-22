@@ -79,11 +79,11 @@ export default function MapView({ layers }: { layers: string[] }) {
           }}
         />
 
-        <CenterOnLayer layer={layers[0] || 'example:demo'} />
+        <CenterOnLayer layer={layers[layers.length - 1] || 'example:demo'} />
 
         <ClickHandler
           onObjectClick={setClickInfo}
-          layer={layers[0] || 'example:demo'}
+          layer={layers[layers.length - 1] || 'example:demo'}
         />
 
         {wmsError && (

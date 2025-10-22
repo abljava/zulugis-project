@@ -34,8 +34,8 @@ function App() {
                     ? 'bg-gray-400 shadow-md' 
                     : 'bg-gray-300'
                 }`}>
-                  <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 ease-in-out ${
-                    selectedLayers.includes(layerOption.name) ? 'translate-x-6' : 'translate-x-0'
+                  <div className={`absolute top-0.5 left-0 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 ease-in-out ${
+                    selectedLayers.includes(layerOption.name) ? 'translate-x-[30px]' : 'translate-x-[2px]'
                   }`}>
                     <div className={`w-full h-full rounded-full transition-all duration-200 ${
                       selectedLayers.includes(layerOption.name) 
