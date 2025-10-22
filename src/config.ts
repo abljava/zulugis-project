@@ -12,10 +12,8 @@ export const ZULU_PASSWORD = 'mo';
 // Доступные слои
 export const AVAILABLE_LAYERS = [
   { name: 'example:demo', title: 'Demo слой' },
-  { name: 'mo:vp', title: 'Московская область (векторные данные)' },
-  { name: 'mo:vo', title: 'Московская область (водные объекты)' },
-  { name: 'mo:region', title: 'Московский регион' },
-  { name: 'world:piter', title: 'Петербург' },
+  { name: 'mo:vp', title: 'Водопровод' },
+  { name: 'mo:vo', title: 'Водоотведение' },
   { name: 'openlayers:teploset', title: 'Теплосеть' }
 ];
 
@@ -28,3 +26,12 @@ export function getAuthHeaders(): HeadersInit {
     'Content-Type': 'text/plain;charset=UTF-8'
   };
 }
+
+// предустановленные центры и зумы слоев
+export const LAYER_VIEWS: Record<string, { center: [number, number]; zoom: number }> = {
+  'example:demo': { center: [42.32, 69.58], zoom: 12 },
+  'mo:vp': { center: [55.79576762359448, 38.43813748334245], zoom: 16 },
+  'mo:vo': { center: [55.79576762359448, 38.43813748334245], zoom: 16 },
+  'openlayers:teploset': { center: [64.55812910920382, 39.82297283375529], zoom: 16 },
+};
+

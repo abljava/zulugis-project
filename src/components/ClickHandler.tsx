@@ -42,11 +42,8 @@ export function ClickHandler({
     const zoom = map.getZoom();
     const layerName = layer; // Используем переданный слой
 
-    console.log('click layer: ', layer);
-
     try {
       const xmlRequest = createZWSRequest(layerName, e.latlng, zoom);
-      console.log('Sending request:', xmlRequest);
 
       const response = await fetch(ZULU_ZWS_URL, {
         method: 'POST',
@@ -56,7 +53,6 @@ export function ClickHandler({
 
       if (response.ok) {
         const xmlText = await response.text();
-        console.log('ZWS Response:', xmlText);
 
         // Парсим XML ответ
         const parser = new DOMParser();
