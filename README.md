@@ -1,16 +1,78 @@
-# React + Vite
+# GIS Web Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Веб-приложение для работы с геоинформационными слоями через ZuluServer WMS/WFS/ZWS сервисы.
 
-Currently, two official plugins are available:
+## Описание проекта
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Функционал приложения:
+- Просмотр различных геоинформационных слоёв
+- Переключение слоёв
+- Получение информации об объектах по клику на карте
+- Автоматическое центрирование карты по выбранному слою
 
-## React Compiler
+### Технологии
+- **Frontend**: React 18 + TypeScript
+- **Карта**: Leaflet + React-Leaflet
+- **Стили**: Tailwind CSS
+- **Сборка**: Vite
+- **Сервер**: ZuluServer (WMS/WFS/ZWS)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Установка и запуск
 
-## Expanding the ESLint configuration
+### Предварительные требования
+- Node.js 20+ 
+- npm или yarn
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Установка зависимостей
+```bash
+npm install
+```
+
+### Запуск в режиме разработки
+```bash
+npm run dev
+```
+
+Приложение будет доступно по адресу: `http://localhost:5173`
+
+### Сборка для продакшена
+```bash
+npm run build
+```
+
+### Предварительный просмотр сборки
+```bash
+npm run preview
+```
+
+## Конфигурация
+
+### Настройка слоёв
+Слои настраиваются в файле `src/config.ts`:
+- `AVAILABLE_LAYERS` - список доступных слоёв
+- `LAYER_VIEWS` - центры и зум для каждого слоя
+
+### Настройка сервера
+- `ZULU_WMS_URL` - URL для WMS запросов
+- `ZULU_ZWS_URL` - URL для ZWS запросов (получение информации об объектах)
+- `ZULU_USERNAME` / `ZULU_PASSWORD` - учётные данные для авторизации
+
+## Структура проекта
+
+```
+src/
+├── components/
+│   ├── MapView.tsx          # Основной компонент карты
+│   ├── ClickHandler.tsx     # Обработка кликов по объектам
+│   └── CenterOnLayer.tsx    # Автоцентрирование по слоям
+├── config.ts                # Конфигурация слоёв и сервера
+├── App.jsx                  # Главный компонент приложения
+└── main.jsx                 # Точка входа
+```
+
+## Особенности
+
+- **Dev-прокси**: Vite автоматически проксирует запросы к `/zulu/*` на ZuluServer с добавлением авторизации
+- **Множественный выбор**: можно включать несколько слоёв одновременно
+- **Адаптивный дизайн**: интерфейс адаптируется под разные размеры экрана
+- **TypeScript**: полная типизация для надёжности разработки

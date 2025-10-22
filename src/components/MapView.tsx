@@ -1,172 +1,143 @@
-import React, { useMemo, useState, useRef } from 'react';
-import { MapContainer, TileLayer, WMSTileLayer, useMap, useMapEvent, Popup, GeoJSON } from 'react-leaflet';
+import React, { useEffect, useMemo, useState } from 'react';
+import { MapContainer, TileLayer, WMSTileLayer, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { DEFAULT_WMS_LAYER } from '../config';
+import { ZULU_WMS_URL } from '../config';
+import { CenterOnLayer } from './CenterOnLayer';
+import { ClickHandler } from './ClickHandler';
 
-type ClickInfo = { latlng: L.LatLng, html: string } | null;
-type WFSFeature = any | null;
+type ClickInfo = { latlng: L.LatLng; data: any } | null;
 
-function buildGetFeatureInfoUrl(map: L.Map, latlng: L.LatLng, layerName: string): string {
-  const size = map.getSize();
-  const bounds = map.getBounds();
-  const sw = bounds.getSouthWest();
-  const ne = bounds.getNorthEast();
-  const point = map.latLngToContainerPoint(latlng);
-
-  const params = new URLSearchParams({
-    SERVICE: 'WMS',
-    VERSION: '1.3.0',
-    REQUEST: 'GetFeatureInfo',
-    LAYERS: layerName,
-    QUERY_LAYERS: layerName,
-    CRS: 'EPSG:3857',
-    BBOX: `${sw.lng},${sw.lat},${ne.lng},${ne.lat}`,
-    WIDTH: String(size.x),
-    HEIGHT: String(size.y),
-    I: String(Math.round(point.x)),
-    J: String(Math.round(point.y)),
-    INFO_FORMAT: 'text/html',
-    FEATURE_COUNT: '10',
-    STYLES: '',
-  });
-
-  return `/ws?${params.toString()}`;
-}
-
-function buildWFSGetFeatureUrl(map: L.Map, latlng: L.LatLng, layerName: string): string {
-  // Создаем небольшой BBOX вокруг точки клика (примерно 100м)
-  const tolerance = 0.001; // ~100 метров в градусах
-  const sw = L.latLng(latlng.lat - tolerance, latlng.lng - tolerance);
-  const ne = L.latLng(latlng.lat + tolerance, latlng.lng + tolerance);
-  
-  const params = new URLSearchParams({
-    SERVICE: 'WFS',
-    VERSION: '1.0.0',
-    REQUEST: 'GetFeature',
-    TYPENAME: layerName,
-    OUTPUTFORMAT: 'application/json',
-    BBOX: `${sw.lng},${sw.lat},${ne.lng},${ne.lat},EPSG:4326`,
-    MAXFEATURES: '50',
-  });
-
-  return `/ws?${params.toString()}`;
-}
-
-export default function MapView() {
+export default function MapView({ layers }: { layers: string[] }) {
   const [clickInfo, setClickInfo] = useState<ClickInfo>(null);
-  const [wfsFeatures, setWfsFeatures] = useState<WFSFeature>(null);
+  const [wmsError, setWmsError] = useState<string | null>(null);
 
-  function ClickHandler() {
-    const map = useMap();
-    useMapEvent('click', async (e) => {
-      setClickInfo({ latlng: e.latlng, html: 'Загрузка…' });
-      setWfsFeatures(null); // Очищаем предыдущие WFS объекты
-      
-      try {
-        // GetFeatureInfo запрос
-        const getFeatureInfoUrl = buildGetFeatureInfoUrl(map, e.latlng, DEFAULT_WMS_LAYER);
-        console.log('GetFeatureInfo URL:', getFeatureInfoUrl);
-        const res = await fetch(getFeatureInfoUrl, { credentials: 'omit' });
-        console.log('Response status:', res.status);
-        console.log('Response headers:', Object.fromEntries(res.headers.entries()));
-        
-        const contentType = res.headers.get('content-type') || '';
-        let html = '';
-        if (contentType.includes('application/json')) {
-          const data = await res.json();
-          console.log('JSON response data:', data);
-          html = `<pre style="max-width:420px; white-space:pre-wrap;">${
-            escapeHtml(JSON.stringify(data, null, 2))
-          }</pre>`;
-        } else {
-          html = await res.text();
-          console.log('Text response:', html);
-        }
-        setClickInfo({ latlng: e.latlng, html });
+  const center = useMemo(() => ({ lat: 42.3, lng: 69.5 }), []); // Координаты для центра слоя
 
-        // WFS GetFeature запрос для подсветки объектов
-        const wfsUrl = buildWFSGetFeatureUrl(map, e.latlng, DEFAULT_WMS_LAYER);
-        console.log('WFS GetFeature URL:', wfsUrl);
-        const wfsRes = await fetch(wfsUrl, { credentials: 'omit' });
-        console.log('WFS Response status:', wfsRes.status);
-        
-        if (wfsRes.ok) {
-          const wfsData = await wfsRes.json();
-          console.log('WFS features:', wfsData);
-          setWfsFeatures(wfsData);
-        } else {
-          console.log('WFS request failed:', wfsRes.status);
-        }
-        
-      } catch (err: any) {
-        setClickInfo({ latlng: e.latlng, html: `<div style="color:#b91c1c">Ошибка: ${escapeHtml(String(err))}</div>` });
+  const wmsParams = useMemo(() => {
+    try {
+      if (!layers || layers.length === 0) {
+        console.warn('No layers provided to MapView');
+        return {
+          service: 'WMS',
+          version: '1.3.0',
+          request: 'GetMap',
+          layers: 'example:demo',
+          styles: '',
+          format: 'image/png',
+          transparent: true,
+          TILED: true,
+        } as any;
       }
-    });
-    return null;
-  }
 
-  function escapeHtml(s: string) {
-    return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
-  }
-
-  const center = useMemo(() => ({ lat: 56.8, lng: 51.1 }), []);
+      return {
+        service: 'WMS',
+        version: '1.3.0',
+        request: 'GetMap',
+        layers: layers.join(','),
+        styles: '',
+        format: 'image/png',
+        transparent: true,
+        TILED: true,
+      } as any;
+    } catch (error) {
+      console.error('Error creating WMS params:', error);
+      setWmsError('Ошибка настройки слоёв');
+      return {
+        service: 'WMS',
+        version: '1.3.0',
+        request: 'GetMap',
+        layers: 'example:demo',
+        styles: '',
+        format: 'image/png',
+        transparent: true,
+        TILED: true,
+      } as any;
+    }
+  }, [layers]);
 
   return (
-    <div style={{ height: '80vh', width: '100%' }}>
-      <MapContainer center={center} zoom={6} style={{ height: '100%', width: '100%' }}>
+    <div className='h-[90vh] w-full'>
+      <MapContainer center={center} zoom={10} className='h-full w-full'>
         <TileLayer
-          attribution="© OpenStreetMap contributors"
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='© OpenStreetMap contributors'
+          url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
         />
 
         <WMSTileLayer
-          url={'/ws'}
-          params={{
-            service: 'WMS',
-            version: '1.3.0',
-            request: 'GetMap',
-            layers: DEFAULT_WMS_LAYER,
-            styles: '',
-            format: 'image/png',
-            transparent: true,
+          url={ZULU_WMS_URL}
+          uppercase={true}
+          params={wmsParams}
+          crossOrigin='anonymous'
+          eventHandlers={{
+            loading: () => setWmsError(null),
+            load: () => setWmsError(null),
+            tileerror: (e) => {
+              console.error('WMS tile error:', e);
+              setWmsError('Ошибка загрузки слоя');
+            },
           }}
-          crossOrigin="anonymous"
         />
 
-        <ClickHandler />
-        {clickInfo && (
-          <Popup position={clickInfo.latlng} eventHandlers={{ remove: () => setClickInfo(null) }}>
-            <div style={{ maxWidth: 440 }}>
-              <div style={{ marginBottom: 8 }}>Слой: {DEFAULT_WMS_LAYER}</div>
-              <div dangerouslySetInnerHTML={{ __html: clickInfo.html }} />
-            </div>
-          </Popup>
+        <CenterOnLayer layer={layers[layers.length - 1] || 'example:demo'} />
+
+        <ClickHandler
+          onObjectClick={setClickInfo}
+          layer={layers[layers.length - 1] || 'example:demo'}
+        />
+
+        {wmsError && (
+          <div className='absolute top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-[1000]'>
+            <strong>Ошибка:</strong> {wmsError}
+          </div>
         )}
 
-        {wfsFeatures && (
-          <GeoJSON 
-            data={wfsFeatures} 
-            style={{
-              color: '#ff0000',
-              weight: 3,
-              opacity: 0.8,
-              fillOpacity: 0.2,
-              fillColor: '#ff0000'
-            }}
-            onEachFeature={(feature, layer) => {
-              if (feature.properties) {
-                const props = Object.entries(feature.properties)
-                  .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
-                  .join('<br/>');
-                layer.bindPopup(`<div style="max-width: 300px;"><h4>WFS Feature</h4>${props}</div>`);
-              }
-            }}
-          />
+        {clickInfo && (
+          <Popup
+            position={clickInfo.latlng}
+            eventHandlers={{ remove: () => setClickInfo(null) }}
+          >
+            <div
+              className='max-w-sm max-h-[70vh] overflow-y-auto'
+              style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#d1d5db #f3f4f6',
+              }}
+            >
+              <h4 className='text-lg font-semibold mb-2'>
+                Информация об объекте
+              </h4>
+              {clickInfo.data ? (
+                <div>
+                  {Object.keys(clickInfo.data.attributes).length > 0 && (
+                      <table className='w-full text-xs border-collapse'>
+                        <tbody>
+                          {Object.entries(clickInfo.data.attributes).map(
+                            ([key, attrData]: [string, any]) => (
+                              <tr
+                                key={key}
+                                className='border-b border-gray-200'
+                              >
+                                <td className='px-2 py-1 font-bold align-top w-1/2 bg-gray-50'>
+                                  {key}:
+                                </td>
+                                <td className='px-2 py-1 align-top w-1/2'>
+                                  {attrData.value}{' '}
+                                </td>
+                              </tr>
+                            )
+                          )}
+                        </tbody>
+                      </table>
+                  )}
+                </div>
+              ) : (
+                <p>Объект не найден в данной точке</p>
+              )}
+            </div>
+          </Popup>
         )}
       </MapContainer>
     </div>
   );
 }
-
-
