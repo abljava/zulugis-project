@@ -3,9 +3,9 @@
 
 ## Технологии
 
-- React + Vite (уже есть)
+- React + Vite
 - Leaflet + react-leaflet
-- Работа с HTTP: fetch/axios
+- Работа с HTTP: fetch
 
 ## Источники данных
 
@@ -49,7 +49,7 @@
 
 7) Конфигурация
 
-- `.env` переменные: `VITE_ZULU_BASE_URL`, `VITE_DEFAULT_LAYER`, `VITE_AUTH_BASIC` (опционально)
+- `.env` переменные: `VITE_ZULU_BASE_URL`, `VITE_DEFAULT_LAYER`
 
 8) Тестирование
 
@@ -75,19 +75,8 @@
 
 ## Ограничения и допущения
 
-- Для подсветки предпочтём WFS с `OUTPUTFORMAT=application/json`; если сервер вернёт GML — добавим простой парсер/конвертер или временно ограничимся без контура
-- Авторизация не используется, при необходимости — Basic Auth в заголовках
+- Авторизация используется, username: mo, password: mo
 
 ### To-dos
 
-- [ ] Установить axios и xml2js для Capabilities парсинга
-- [ ] Добавить .env с VITE_ZULU_BASE_URL и VITE_DEFAULT_LAYER=mo:vo
-- [ ] Создать MapView с Leaflet, OSM подложкой, WMS слоем
-- [ ] Загрузить и распарсить WMS GetCapabilities, заполнить список слоев
-- [ ] Реализовать GetFeatureInfo и popup со свойствами
-- [ ] Добавить выборочно WFS GetFeature для подсветки объекта
-- [ ] Подготовить каркас клиента ZWS с примерами вызовов
-- [ ] Сделать панель: выбор слоя, прозрачность, CRS, переключатель WFS
-- [ ] Индикация загрузки и ошибок запросов
-- [ ] Проверить на слое mo:vo: WMS, GetFeatureInfo, подсветка
 
