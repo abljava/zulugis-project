@@ -1,7 +1,8 @@
-// Конфигурация для работы с Zulu сервером
+// Конфигурация для работы с Zulu сервером напрямую
 export const ZULU_BASE_URL = 'http://zs.zulugis.ru:6473';
 export const ZULU_WMS_URL = `${ZULU_BASE_URL}/ws`;
 export const ZULU_ZWS_URL = `${ZULU_BASE_URL}/zws`;
+export const ZULU_WFS_URL = `${ZULU_BASE_URL}/ws`;
 
 // Учетные данные для авторизации
 export const ZULU_USERNAME = 'mo';
